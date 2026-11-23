@@ -22,6 +22,7 @@ EXPORT_DIR = DATA_DIR / "exports"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
+DEMO_MODE = os.getenv("TFD_DEMO_MODE", "false").lower() == "true"
 MAX_UPLOAD_BYTES = int(os.getenv("TFD_MAX_UPLOAD_BYTES", str(500 * 1024 * 1024)))
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".mkv", ".jpg", ".jpeg", ".png", ".webp"}
 
@@ -53,6 +54,8 @@ def list_media() -> dict[str, list[dict]]:
 
 @app.post("/api/media/upload")
 async def upload_media(files: Annotated[list[UploadFile], File(...)]) -> dict[str, list[dict]]:
+    if DEMO_MODE:
+        raise HTTPException(status_code=503, detail="Media uploads are disabled in the hosted demo. Run the app locally to upload and process footage privately.")
     if not files:
         raise HTTPException(status_code=400, detail="Choose at least one media file.")
 
@@ -99,6 +102,8 @@ def create_storyboard(request: StoryboardRequest) -> dict:
 
 @app.post("/api/render")
 def create_render(request: RenderRequest) -> dict:
+    if DEMO_MODE:
+        raise HTTPException(status_code=503, detail="Cloud rendering is disabled in the hosted demo. Run the app locally with FFmpeg to render your footage.")
     selected = []
     for asset_id in request.asset_ids:
         matches = list(UPLOAD_DIR.glob(f"{asset_id}.*"))

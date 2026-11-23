@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: travel-film-director-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: TFD_ALLOWED_ORIGINS
+        value: https://YOUR-PROJECT.pages.dev

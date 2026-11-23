@@ -10,5 +10,7 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: TFD_DEMO_MODE
+        value: "true"
       - key: TFD_ALLOWED_ORIGINS
         value: https://YOUR-PROJECT.pages.dev

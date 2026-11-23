@@ -26,9 +26,10 @@ MAX_UPLOAD_BYTES = int(os.getenv("TFD_MAX_UPLOAD_BYTES", str(500 * 1024 * 1024))
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".mkv", ".jpg", ".jpeg", ".png", ".webp"}
 
 app = FastAPI(title="Travel Film Director API", version="0.1.0")
+allowed_origins = [origin.strip() for origin in os.getenv("TFD_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

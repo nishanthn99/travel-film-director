@@ -12,7 +12,9 @@ type Asset = {
 type Scene = { id: string; title: string; direction: string; start_seconds: number; duration_seconds: number; suggested_shot: string };
 type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string };
 
-const API = "/api";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const API = `${API_BASE}/api`;
+const absoluteMediaUrl = (path: string) => `${API_BASE}${path}`;
 const formatBytes = (bytes: number) => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 const formatTime = (seconds: number | null) => seconds == null ? "—" : `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
@@ -156,7 +158,7 @@ export default function App() {
         <p className="board-note">{board.note}</p>
         <div className="storyboard-grid">{board.scenes.map((scene, index) => <article className="scene-card" key={scene.id}><div className={`scene-number scene-${index + 1}`}>0{index + 1}</div><div className="scene-time">{formatTime(scene.start_seconds)} · {scene.duration_seconds}s</div><h3>{scene.title}</h3><p>{scene.direction}</p><span className="shot-tag">{scene.suggested_shot}</span></article>)}</div>
         <div className="render-bar"><div><strong>Ready for a first cut?</strong><span>Concatenate selected video clips into a local MP4 export.</span></div><button className="primary-button render-button" onClick={() => void renderFilm()} disabled={busy || selectedVideos.length === 0}>{busy ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />} Render selected clips</button></div>
-        {renderUrl && <a className="export-link" href={renderUrl} target="_blank" rel="noreferrer"><Check size={16} /> Open your rendered film <ArrowUpRight size={14} /></a>}
+        {renderUrl && <a className="export-link" href={absoluteMediaUrl(renderUrl)} target="_blank" rel="noreferrer"><Check size={16} /> Open your rendered film <ArrowUpRight size={14} /></a>}
       </section>}
 
       {message && <div className="toast" role="status">{message}</div>}

@@ -91,7 +91,7 @@ The recommended free-tier demo uses **Cloudflare Pages** for the Vite frontend a
 3. Create the web service using the Free instance type.
 4. After deployment, copy the service URL (for example, `https://your-service.onrender.com`).
 
-The free instance can sleep when idle. Its local filesystem is ephemeral: uploaded videos and rendered exports can disappear after restarts, redeployments or service replacement. FFmpeg is not installed in this Python-only deployment, so cloud video rendering is not supported by this demo configuration. Keep actual media processing local for now.
+The free instance can sleep when idle. The hosted blueprint enables demo mode, which disables public uploads and cloud rendering because this service has no persistent media storage or authentication. Use the hosted site to try storyboard generation. Keep actual media upload and FFmpeg rendering local for now.
 
 ### Deploy the frontend on Cloudflare Pages
 
@@ -110,7 +110,7 @@ After Cloudflare gives you the Pages URL, open the Render service's Environment 
 
 - Render free services may spin down after inactivity, so the first request can be slow.
 - Render's filesystem is ephemeral. Do not treat it as permanent storage or upload personal/irreplaceable travel footage.
-- The hosted demo is suitable for testing the API and storyboard flow, not large uploads or dependable video rendering.
+- The hosted demo is suitable for testing the storyboard flow only. Public upload and rendering endpoints are deliberately disabled to prevent anonymous file storage and resource abuse.
 - The current app has no user authentication or per-user storage isolation. Do not expose sensitive media or use it as a multi-user production service.
 - For a reliable public editor, we will need a secure upload/storage design and a dedicated rendering worker. Those are separate from this zero-cost demo.
 - The frontend can also be built locally with no environment variable; Vite's development proxy continues to route `/api` to localhost.

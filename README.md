@@ -78,3 +78,39 @@ The current renderer accepts video clips, normalizes them to the selected aspect
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+## Free demo deployment
+
+The recommended free-tier demo uses **Cloudflare Pages** for the Vite frontend and **Render** for the FastAPI API. This is a public demo deployment, not a production media-hosting architecture.
+
+### Deploy the API on Render
+
+1. Sign in to [Render](https://render.com/) and choose **New → Blueprint**.
+2. Connect this GitHub repository. Render detects the root `render.yaml`.
+3. Create the web service using the Free instance type.
+4. After deployment, copy the service URL (for example, `https://your-service.onrender.com`).
+
+The free instance can sleep when idle. Its local filesystem is ephemeral: uploaded videos and rendered exports can disappear after restarts, redeployments or service replacement. FFmpeg is not installed in this Python-only deployment, so cloud video rendering is not supported by this demo configuration. Keep actual media processing local for now.
+
+### Deploy the frontend on Cloudflare Pages
+
+1. In [Cloudflare Dashboard](https://dash.cloudflare.com/), open **Workers & Pages → Create → Pages → Connect to Git**.
+2. Select `nishanthn99/travel-film-director` and the `main` branch.
+3. Set the root directory to `frontend`.
+4. Set build command to `npm run build` and output directory to `dist`.
+5. Add the environment variable `VITE_API_BASE_URL` with the Render service URL, without a trailing slash (for example, `https://your-service.onrender.com`).
+6. Deploy.
+
+### Configure API CORS
+
+After Cloudflare gives you the Pages URL, open the Render service's Environment settings and set `TFD_ALLOWED_ORIGINS` to the exact frontend origin, for example `https://your-project.pages.dev`. Separate multiple origins with commas. Save changes and redeploy.
+
+### Important limitations of the free demo
+
+- Render free services may spin down after inactivity, so the first request can be slow.
+- Render's filesystem is ephemeral. Do not treat it as permanent storage or upload personal/irreplaceable travel footage.
+- The hosted demo is suitable for testing the API and storyboard flow, not large uploads or dependable video rendering.
+- The current app has no user authentication or per-user storage isolation. Do not expose sensitive media or use it as a multi-user production service.
+- For a reliable public editor, we will need a secure upload/storage design and a dedicated rendering worker. Those are separate from this zero-cost demo.
+- The frontend can also be built locally with no environment variable; Vite's development proxy continues to route `/api` to localhost.

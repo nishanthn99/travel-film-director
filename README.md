@@ -7,7 +7,7 @@ An open-source, local-first AI-assisted travel video editor. Turn a folder of tr
 ## MVP status
 
 - [x] Local media upload and metadata inspection
-- [x] Trip brief and editable storyboard generation (deterministic, no paid AI)
+- [x] Trip brief and editable storyboard generation (local Ollama with deterministic demo fallback)
 - [x] Local FFmpeg render pipeline for selected video clips
 - [x] React workspace with upload, asset library, storyboard and render controls
 - [x] API tests and CI workflow
@@ -23,7 +23,7 @@ An open-source, local-first AI-assisted travel video editor. Turn a folder of tr
 - **Storage:** local `data/uploads` and `data/exports` directories
 - **Tests:** pytest + HTTPX; frontend production build in GitHub Actions
 
-The first release deliberately uses a predictable storyboard engine rather than pretending to provide AI analysis without a model. The service boundary is ready for optional local models (for example, Ollama) later.
+Local storyboard generation uses Ollama when enabled. The deterministic storyboard is retained for the hosted demo and as an explicit non-AI fallback. No hosted AI API or API key is used.
 
 ## Run locally
 
@@ -54,6 +54,30 @@ npm run dev
 Open http://localhost:5173.
 
 Vite proxies `/api` requests to the API at port 8000.
+
+## Local AI with Ollama
+
+The local backend connects to the Ollama HTTP API on the same machine. By default it expects `http://127.0.0.1:11434` and the `qwen2.5:3b` model. Install Ollama from [ollama.com](https://ollama.com/), then run:
+
+```bash
+ollama pull qwen2.5:3b
+ollama serve
+```
+
+Keep Ollama running, start the FastAPI backend, and open the frontend. The workspace displays the connection state. `GET /api/ai/status` reports whether the configured model is available. `POST /api/storyboard` uses the local model when `OLLAMA_ENABLED=true` (the default). If Ollama is unavailable, the API returns an actionable 503 rather than silently pretending the result is AI-generated.
+
+Optional backend environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OLLAMA_ENABLED` | `true` | Set `false` to use the deterministic template locally |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama API base URL |
+| `OLLAMA_MODEL` | `qwen2.5:3b` | Model name already pulled in Ollama |
+| `OLLAMA_TIMEOUT_SECONDS` | `180` | Generation request timeout |
+
+For a different model, pull it with `ollama pull <model>` and set `OLLAMA_MODEL` to that exact name. Keep Ollama bound to localhost; do not expose its unauthenticated API to the public internet. The hosted Render demo intentionally uses the deterministic template because the free web service does not host a local model runtime.
+
+**Current AI scope:** the model creates a personalized storyboard from the trip brief. It does not yet inspect uploaded footage, classify video frames, match clips, or make edits. Those require a later vision-analysis and media-matching milestone.
 
 ## Rendering notes
 

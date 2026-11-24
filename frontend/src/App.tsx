@@ -10,9 +10,10 @@ type Asset = {
   metadata_available: boolean;
 };
 type Scene = { id: string; title: string; direction: string; start_seconds: number; duration_seconds: number; suggested_shot: string };
-type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string };
+type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string; generation_mode?: "ollama" | "template" };
+type AIStatus = { provider: string; enabled: boolean; available: boolean; model: string | null; message: string };
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://travel-film-director-api-o40j.onrender.com").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "https://travel-film-director-api-o40j.onrender.com" : "")).replace(/\/$/, "");
 const HOSTED_DEMO = import.meta.env.PROD;
 const API = `${API_BASE}/api`;
 const absoluteMediaUrl = (path: string) => `${API_BASE}${path}`;
@@ -32,6 +33,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [renderUrl, setRenderUrl] = useState("");
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedVideos = useMemo(() => assets.filter(a => selected.includes(a.id) && a.media_type === "video"), [assets, selected]);
@@ -42,7 +44,11 @@ export default function App() {
       if (response.ok) setAssets((await response.json()).assets);
     } catch { setMessage("Could not reach the local API. Start the backend on port 8000."); }
   }
-  useEffect(() => { void loadAssets(); }, []);
+  async function loadAIStatus() {
+    try { const response = await fetch(`${API}/ai/status`); if (response.ok) setAiStatus(await response.json()); }
+    catch { setAiStatus(null); }
+  }
+  useEffect(() => { void loadAssets(); void loadAIStatus(); }, []);
 
   async function uploadFiles(files: FileList | File[]) {
     if (!files.length) return;
@@ -139,6 +145,7 @@ export default function App() {
 
         <section className="panel brief-panel">
           <div className="panel-heading"><div className="panel-icon"><WandSparkles size={17} /></div><div><h3>Tell your story</h3><p>Give your edit a sense of place</p></div></div>
+          <div className={`ai-status ${aiStatus?.available ? "ai-ready" : "ai-offline"}`}><span className="ai-status-dot" /><span><strong>{aiStatus?.available ? "LOCAL AI CONNECTED" : HOSTED_DEMO ? "DEMO STORYBOARD MODE" : "LOCAL AI NOT READY"}</strong><small>{aiStatus?.message || "Checking local Ollama connection…"}</small></span></div>
           <label className="field-label" htmlFor="destination">WHERE DID YOU GO?</label>
           <input id="destination" className="text-input" placeholder="e.g. The quiet roads of Coorg" value={destination} onChange={e => setDestination(e.target.value)} />
           <label className="field-label" htmlFor="description">WHAT MADE THIS TRIP SPECIAL?</label>
@@ -150,12 +157,12 @@ export default function App() {
             <div className="field-grow"><label className="field-label" htmlFor="ratio">FORMAT</label><select id="ratio" className="text-input" value={ratio} onChange={e => setRatio(e.target.value)}><option>9:16</option><option>16:9</option><option>1:1</option></select></div>
           </div>
           <button className="primary-button" onClick={() => void generateStoryboard()} disabled={busy}>{busy ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />} Create my storyboard <ChevronRight size={16} /></button>
-          <p className="small-note">Creates a first-draft travel narrative locally. Footage-aware AI analysis is planned for a later milestone.</p>
+          <p className="small-note">{aiStatus?.available ? `Storyboard generated privately with ${aiStatus.model}. Your trip brief is sent only to your local Ollama service.` : "Install Ollama and pull the configured model to enable private AI storyboard generation. The hosted demo uses a deterministic template."}</p>
         </section>
       </div>
 
       {board && <section className="storyboard-section">
-        <div className="section-title"><div><span className="eyebrow">THE FIRST CUT</span><h2>{board.title}</h2></div><span className="duration-tag">{board.target_duration_seconds}s · {board.aspect_ratio}</span></div>
+        <div className="section-title"><div><span className="eyebrow">{board.generation_mode === "ollama" ? "LOCAL AI FIRST CUT" : "THE FIRST CUT"}</span><h2>{board.title}</h2></div><span className="duration-tag">{board.target_duration_seconds}s · {board.aspect_ratio}</span></div>
         <p className="board-note">{board.note}</p>
         <div className="storyboard-grid">{board.scenes.map((scene, index) => <article className="scene-card" key={scene.id}><div className={`scene-number scene-${index + 1}`}>0{index + 1}</div><div className="scene-time">{formatTime(scene.start_seconds)} · {scene.duration_seconds}s</div><h3>{scene.title}</h3><p>{scene.direction}</p><span className="shot-tag">{scene.suggested_shot}</span></article>)}</div>
         <div className="render-bar"><div><strong>Ready for a first cut?</strong><span>Concatenate selected video clips into a local MP4 export.</span></div><button className="primary-button render-button" onClick={() => void renderFilm()} disabled={busy || selectedVideos.length === 0 || HOSTED_DEMO}>{busy ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />} {HOSTED_DEMO ? "Rendering available locally" : "Render selected clips"}</button></div>

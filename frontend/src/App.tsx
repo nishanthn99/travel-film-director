@@ -10,7 +10,8 @@ type Asset = {
   metadata_available: boolean;
 };
 type Scene = { id: string; title: string; direction: string; start_seconds: number; duration_seconds: number; suggested_shot: string };
-type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string; generation_mode?: "ollama" | "template" };\ntype AIStatus = { provider: string; enabled: boolean; available: boolean; model: string | null; message: string };
+type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string; generation_mode?: "ollama" | "template" };
+type AIStatus = { provider: string; enabled: boolean; available: boolean; model: string | null; message: string };
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "https://travel-film-director-api-o40j.onrender.com" : "")).replace(/\/$/, "");
 const HOSTED_DEMO = import.meta.env.PROD;
@@ -31,7 +32,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
-  const [renderUrl, setRenderUrl] = useState("");\n  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
+  const [renderUrl, setRenderUrl] = useState("");
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedVideos = useMemo(() => assets.filter(a => selected.includes(a.id) && a.media_type === "video"), [assets, selected]);
@@ -42,7 +44,11 @@ export default function App() {
       if (response.ok) setAssets((await response.json()).assets);
     } catch { setMessage("Could not reach the local API. Start the backend on port 8000."); }
   }
-  async function loadAIStatus() {\n    try { const response = await fetch(`${API}/ai/status`); if (response.ok) setAiStatus(await response.json()); }\n    catch { setAiStatus(null); }\n  }\n  useEffect(() => { void loadAssets(); void loadAIStatus(); }, []);
+  async function loadAIStatus() {
+    try { const response = await fetch(`${API}/ai/status`); if (response.ok) setAiStatus(await response.json()); }
+    catch { setAiStatus(null); }
+  }
+  useEffect(() => { void loadAssets(); void loadAIStatus(); }, []);
 
   async function uploadFiles(files: FileList | File[]) {
     if (!files.length) return;
@@ -138,7 +144,8 @@ export default function App() {
         </section>
 
         <section className="panel brief-panel">
-          <div className="panel-heading"><div className="panel-icon"><WandSparkles size={17} /></div><div><h3>Tell your story</h3><p>Give your edit a sense of place</p></div></div>\n          <div className={`ai-status ${aiStatus?.available ? "ai-ready" : "ai-offline"}`}><span className="ai-status-dot" /><span><strong>{aiStatus?.available ? "LOCAL AI CONNECTED" : HOSTED_DEMO ? "DEMO STORYBOARD MODE" : "LOCAL AI NOT READY"}</strong><small>{aiStatus?.message || "Checking local Ollama connection…"}</small></span></div>
+          <div className="panel-heading"><div className="panel-icon"><WandSparkles size={17} /></div><div><h3>Tell your story</h3><p>Give your edit a sense of place</p></div></div>
+          <div className={`ai-status ${aiStatus?.available ? "ai-ready" : "ai-offline"}`}><span className="ai-status-dot" /><span><strong>{aiStatus?.available ? "LOCAL AI CONNECTED" : HOSTED_DEMO ? "DEMO STORYBOARD MODE" : "LOCAL AI NOT READY"}</strong><small>{aiStatus?.message || "Checking local Ollama connection…"}</small></span></div>
           <label className="field-label" htmlFor="destination">WHERE DID YOU GO?</label>
           <input id="destination" className="text-input" placeholder="e.g. The quiet roads of Coorg" value={destination} onChange={e => setDestination(e.target.value)} />
           <label className="field-label" htmlFor="description">WHAT MADE THIS TRIP SPECIAL?</label>

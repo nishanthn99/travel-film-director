@@ -12,7 +12,8 @@ type Asset = {
 type Scene = { id: string; title: string; direction: string; start_seconds: number; duration_seconds: number; suggested_shot: string };
 type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string };
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://travel-film-director-api-o40j.onrender.com").replace(/\/$/, "");
+const HOSTED_DEMO = import.meta.env.PROD;
 const API = `${API_BASE}/api`;
 const absoluteMediaUrl = (path: string) => `${API_BASE}${path}`;
 const formatBytes = (bytes: number) => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -96,7 +97,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="#"><span className="brand-mark"><Aperture size={19} /></span><span>FRAME<span className="brand-light">TRIP</span></span></a>
-        <div className="topbar-right"><span className="local-pill"><span /> LOCAL WORKSPACE</span><a className="github-link" href="https://github.com/nishanthn99/travel-film-director" target="_blank" rel="noreferrer">Open source <ArrowUpRight size={14} /></a></div>
+        <div className="topbar-right"><span className="local-pill"><span /> {HOSTED_DEMO ? "HOSTED DEMO" : "LOCAL WORKSPACE"}</span><a className="github-link" href="https://github.com/nishanthn99/travel-film-director" target="_blank" rel="noreferrer">Open source <ArrowUpRight size={14} /></a></div>
       </header>
 
       <section className="hero">
@@ -104,7 +105,7 @@ export default function App() {
           <div className="eyebrow"><Sparkles size={13} /> YOUR TRIP. YOUR STORY.</div>
           <h1>Make memories<br /><em>move.</em></h1>
           <p>Bring your travel footage together. Shape the moments into a film that feels like being there all over again.</p>
-          <div className="hero-meta"><span><FolderOpen size={14} /> Your files stay on your device</span><span><Aperture size={14} /> No subscription required</span></div>
+          <div className="hero-meta"><span><FolderOpen size={14} /> {HOSTED_DEMO ? "No account required" : "Your files stay on your device"}</span><span><Aperture size={14} /> No subscription required</span></div>
         </div>
         <div className="hero-art" aria-label="Abstract cinematic mountain landscape">
           <div className="sun" /><div className="mountain mountain-back" /><div className="mountain mountain-front" />
@@ -116,7 +117,7 @@ export default function App() {
       <div className="workspace-grid">
         <section className="panel media-panel">
           <div className="panel-heading"><div className="panel-icon"><Film size={17} /></div><div><h3>Your footage</h3><p>Bring the raw moments together</p></div><span className="count">{assets.length.toString().padStart(2, "0")}</span></div>
-          <div className="dropzone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void uploadFiles(e.dataTransfer.files); }}>
+          <div className={`dropzone ${HOSTED_DEMO ? "dropzone-disabled" : ""}`} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (HOSTED_DEMO) setMessage("Media uploads are available in the local version. The hosted demo currently supports storyboard generation."); else void uploadFiles(e.dataTransfer.files); }}>
             <div className="upload-icon">{uploading ? <LoaderCircle className="spin" /> : <UploadCloud />}</div>
             <strong>{uploading ? "Adding your footage…" : "Drop your trip media here"}</strong>
             <span>MP4, MOV, WEBM, JPG, PNG · up to 500 MB each</span>
@@ -133,7 +134,7 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="panel-footnote">Stored in your local backend folder. Nothing is uploaded to a third-party service.</div>
+          <div className="panel-footnote">{HOSTED_DEMO ? "Hosted demo mode: media upload and video rendering are disabled. Run locally for private file processing." : "Stored in your local backend folder. Nothing is uploaded to a third-party service."}</div>
         </section>
 
         <section className="panel brief-panel">
@@ -157,7 +158,7 @@ export default function App() {
         <div className="section-title"><div><span className="eyebrow">THE FIRST CUT</span><h2>{board.title}</h2></div><span className="duration-tag">{board.target_duration_seconds}s · {board.aspect_ratio}</span></div>
         <p className="board-note">{board.note}</p>
         <div className="storyboard-grid">{board.scenes.map((scene, index) => <article className="scene-card" key={scene.id}><div className={`scene-number scene-${index + 1}`}>0{index + 1}</div><div className="scene-time">{formatTime(scene.start_seconds)} · {scene.duration_seconds}s</div><h3>{scene.title}</h3><p>{scene.direction}</p><span className="shot-tag">{scene.suggested_shot}</span></article>)}</div>
-        <div className="render-bar"><div><strong>Ready for a first cut?</strong><span>Concatenate selected video clips into a local MP4 export.</span></div><button className="primary-button render-button" onClick={() => void renderFilm()} disabled={busy || selectedVideos.length === 0}>{busy ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />} Render selected clips</button></div>
+        <div className="render-bar"><div><strong>Ready for a first cut?</strong><span>Concatenate selected video clips into a local MP4 export.</span></div><button className="primary-button render-button" onClick={() => void renderFilm()} disabled={busy || selectedVideos.length === 0 || HOSTED_DEMO}>{busy ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />} {HOSTED_DEMO ? "Rendering available locally" : "Render selected clips"}</button></div>
         {renderUrl && <a className="export-link" href={absoluteMediaUrl(renderUrl)} target="_blank" rel="noreferrer"><Check size={16} /> Open your rendered film <ArrowUpRight size={14} /></a>}
       </section>}
 

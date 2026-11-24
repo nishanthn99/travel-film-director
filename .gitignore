@@ -22,3 +22,6 @@ backend/data/
 Thumbs.db
 .vscode/
 .idea/
+
+# Netlify local project state
+.netlify/

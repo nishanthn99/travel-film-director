@@ -12,7 +12,7 @@ type Asset = {
 type Scene = { id: string; title: string; direction: string; start_seconds: number; duration_seconds: number; suggested_shot: string };
 type Board = { title: string; destination: string; mood: string; aspect_ratio: string; target_duration_seconds: number; trip_summary: string; scenes: Scene[]; note: string; generation_mode?: "ollama" | "template" };\ntype AIStatus = { provider: string; enabled: boolean; available: boolean; model: string | null; message: string };
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://travel-film-director-api-o40j.onrender.com").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "https://travel-film-director-api-o40j.onrender.com" : "")).replace(/\/$/, "");
 const HOSTED_DEMO = import.meta.env.PROD;
 const API = `${API_BASE}/api`;
 const absoluteMediaUrl = (path: string) => `${API_BASE}${path}`;

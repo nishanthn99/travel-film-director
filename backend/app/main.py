@@ -12,7 +12,8 @@ from fastapi.staticfiles import StaticFiles
 
 from .schemas import RenderRequest, StoryboardRequest
 from .services.media import inspect_media, is_video
-from .services.storyboard import build_storyboard\nfrom .services.ollama import OllamaError, generate_storyboard, get_ollama_status
+from .services.storyboard import build_storyboard
+from .services.ollama import OllamaError, generate_storyboard, get_ollama_status
 from .services.renderer import render_video
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -22,7 +23,8 @@ EXPORT_DIR = DATA_DIR / "exports"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
-DEMO_MODE = os.getenv("TFD_DEMO_MODE", "false").lower() == "true"\nOLLAMA_ENABLED = os.getenv("OLLAMA_ENABLED", "true").lower() == "true"
+DEMO_MODE = os.getenv("TFD_DEMO_MODE", "false").lower() == "true"
+OLLAMA_ENABLED = os.getenv("OLLAMA_ENABLED", "true").lower() == "true"
 MAX_UPLOAD_BYTES = int(os.getenv("TFD_MAX_UPLOAD_BYTES", str(500 * 1024 * 1024)))
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".mkv", ".jpg", ".jpeg", ".png", ".webp"}
 
@@ -118,7 +120,15 @@ async def upload_media(files: Annotated[list[UploadFile], File(...)]) -> dict[st
 
 @app.post("/api/storyboard")
 def create_storyboard(request: StoryboardRequest) -> dict:
-    return build_storyboard(request)
+    if DEMO_MODE or not OLLAMA_ENABLED:
+        return build_storyboard(request)
+    try:
+        return generate_storyboard(request)
+    except (OllamaError, ValueError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Local AI is not ready: {exc}. Check /api/ai/status, then start Ollama and pull the configured model.",
+        ) from exc
 
 
 @app.post("/api/render")

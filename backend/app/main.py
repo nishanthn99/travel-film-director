@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .schemas import RenderRequest, StoryboardRequest
 from .services.media import inspect_media, is_video
-from .services.storyboard import build_storyboard
+from .services.storyboard import build_storyboard\nfrom .services.ollama import OllamaError, generate_storyboard, get_ollama_status
 from .services.renderer import render_video
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -22,11 +22,11 @@ EXPORT_DIR = DATA_DIR / "exports"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
-DEMO_MODE = os.getenv("TFD_DEMO_MODE", "false").lower() == "true"
+DEMO_MODE = os.getenv("TFD_DEMO_MODE", "false").lower() == "true"\nOLLAMA_ENABLED = os.getenv("OLLAMA_ENABLED", "true").lower() == "true"
 MAX_UPLOAD_BYTES = int(os.getenv("TFD_MAX_UPLOAD_BYTES", str(500 * 1024 * 1024)))
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".m4v", ".webm", ".mkv", ".jpg", ".jpeg", ".png", ".webp"}
 
-app = FastAPI(title="Travel Film Director API", version="0.1.0")
+app = FastAPI(title="Travel Film Director API", version="0.2.0")
 allowed_origins = [origin.strip() for origin in os.getenv("TFD_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -40,6 +40,27 @@ app.add_middleware(
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "travel-film-director-api"}
+
+
+@app.get("/api/ai/status")
+def ai_status() -> dict:
+    if DEMO_MODE:
+        return {
+            "provider": "template",
+            "enabled": False,
+            "available": False,
+            "model": None,
+            "message": "The hosted demo uses the deterministic storyboard. Local Ollama inference runs on your own machine.",
+        }
+    if not OLLAMA_ENABLED:
+        return {
+            "provider": "template",
+            "enabled": False,
+            "available": False,
+            "model": None,
+            "message": "Local AI is disabled. Set OLLAMA_ENABLED=true to enable Ollama.",
+        }
+    return get_ollama_status()
 
 
 @app.get("/api/media")
